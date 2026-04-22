@@ -1,15 +1,23 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Blockchain Metadata Chain of Custody & Evidence Verification API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: evidence
+    description: Evidence record management
+  - name: custody
+    description: Chain of custody transactions
+  - name: verification
+    description: Third-party verification
+  - name: dashboard
+    description: Dashboard statistics and summaries
+
 paths:
   /healthz:
     get:
@@ -24,6 +32,297 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /evidence:
+    get:
+      operationId: listEvidence
+      tags: [evidence]
+      summary: List all evidence records
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: caseId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of evidence records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Evidence"
+    post:
+      operationId: createEvidence
+      tags: [evidence]
+      summary: Submit new evidence record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEvidenceBody"
+      responses:
+        "201":
+          description: Evidence created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evidence"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /evidence/{id}:
+    get:
+      operationId: getEvidence
+      tags: [evidence]
+      summary: Get a single evidence record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Evidence record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evidence"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateEvidence
+      tags: [evidence]
+      summary: Update evidence record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEvidenceBody"
+      responses:
+        "200":
+          description: Updated evidence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evidence"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteEvidence
+      tags: [evidence]
+      summary: Delete evidence record
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /evidence/{id}/custody:
+    get:
+      operationId: getEvidenceCustody
+      tags: [custody]
+      summary: Get chain of custody for evidence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Chain of custody transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustodyTransaction"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: addCustodyTransaction
+      tags: [custody]
+      summary: Add custody transaction (access/transfer log)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustodyTransactionBody"
+      responses:
+        "201":
+          description: Transaction logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustodyTransaction"
+        "404":
+          description: Evidence not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /evidence/{id}/verify:
+    post:
+      operationId: verifyEvidence
+      tags: [verification]
+      summary: Verify evidence integrity via blockchain hash
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationResult"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /evidence/{id}/certificate:
+    get:
+      operationId: getEvidenceCertificate
+      tags: [verification]
+      summary: Generate legal admissibility certificate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Legal certificate data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LegalCertificate"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /custody:
+    get:
+      operationId: listCustodyTransactions
+      tags: [custody]
+      summary: List all custody transactions (activity log)
+      responses:
+        "200":
+          description: List of custody transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustodyTransaction"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get overall dashboard statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent custody activity feed
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustodyTransaction"
+
+  /verify/hash:
+    post:
+      operationId: verifyHash
+      tags: [verification]
+      summary: Verify a hash against the blockchain registry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyHashBody"
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationResult"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +333,286 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    Evidence:
+      type: object
+      properties:
+        id:
+          type: integer
+        caseId:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        fileHash:
+          type: string
+        blockchainTxHash:
+          type: ["string", "null"]
+        blockNumber:
+          type: ["integer", "null"]
+        status:
+          type: string
+        evidenceType:
+          type: string
+        collectedBy:
+          type: string
+        collectedAt:
+          type: string
+        locationData:
+          type: ["string", "null"]
+        fileSize:
+          type: ["integer", "null"]
+        mimeType:
+          type: ["string", "null"]
+        isVerified:
+          type: boolean
+        accessCount:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - caseId
+        - title
+        - fileHash
+        - status
+        - evidenceType
+        - collectedBy
+        - collectedAt
+        - isVerified
+        - accessCount
+        - createdAt
+        - updatedAt
+
+    CreateEvidenceBody:
+      type: object
+      properties:
+        caseId:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        fileHash:
+          type: string
+        evidenceType:
+          type: string
+        collectedBy:
+          type: string
+        collectedAt:
+          type: string
+        locationData:
+          type: ["string", "null"]
+        fileSize:
+          type: ["integer", "null"]
+        mimeType:
+          type: ["string", "null"]
+      required:
+        - caseId
+        - title
+        - fileHash
+        - evidenceType
+        - collectedBy
+        - collectedAt
+
+    UpdateEvidenceBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+        locationData:
+          type: ["string", "null"]
+
+    CustodyTransaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        evidenceId:
+          type: integer
+        evidenceTitle:
+          type: ["string", "null"]
+        caseId:
+          type: ["string", "null"]
+        action:
+          type: string
+        performedBy:
+          type: string
+        performedAt:
+          type: string
+        notes:
+          type: ["string", "null"]
+        txHash:
+          type: string
+        blockNumber:
+          type: ["integer", "null"]
+        previousHash:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - evidenceId
+        - action
+        - performedBy
+        - performedAt
+        - txHash
+        - createdAt
+
+    CreateCustodyTransactionBody:
+      type: object
+      properties:
+        action:
+          type: string
+        performedBy:
+          type: string
+        notes:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+      required:
+        - action
+        - performedBy
+
+    VerificationResult:
+      type: object
+      properties:
+        evidenceId:
+          type: ["integer", "null"]
+        hash:
+          type: string
+        isValid:
+          type: boolean
+        blockchainConfirmed:
+          type: boolean
+        blockNumber:
+          type: ["integer", "null"]
+        timestamp:
+          type: string
+        chainIntegrity:
+          type: boolean
+        totalTransactions:
+          type: integer
+        message:
+          type: string
+      required:
+        - hash
+        - isValid
+        - blockchainConfirmed
+        - chainIntegrity
+        - totalTransactions
+        - message
+        - timestamp
+
+    LegalCertificate:
+      type: object
+      properties:
+        certificateId:
+          type: string
+        evidenceId:
+          type: integer
+        caseId:
+          type: string
+        title:
+          type: string
+        fileHash:
+          type: string
+        blockchainTxHash:
+          type: ["string", "null"]
+        collectedBy:
+          type: string
+        collectedAt:
+          type: string
+        isVerified:
+          type: boolean
+        chainIntegrity:
+          type: boolean
+        totalCustodyEvents:
+          type: integer
+        generatedAt:
+          type: string
+        custodyChain:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustodyTransaction"
+      required:
+        - certificateId
+        - evidenceId
+        - caseId
+        - title
+        - fileHash
+        - collectedBy
+        - collectedAt
+        - isVerified
+        - chainIntegrity
+        - totalCustodyEvents
+        - generatedAt
+        - custodyChain
+
+    DashboardStats:
+      type: object
+      properties:
+        totalEvidence:
+          type: integer
+        verifiedEvidence:
+          type: integer
+        pendingEvidence:
+          type: integer
+        totalCases:
+          type: integer
+        totalTransactions:
+          type: integer
+        integrityRate:
+          type: number
+        evidenceByType:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountByLabel"
+        evidenceByStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountByLabel"
+      required:
+        - totalEvidence
+        - verifiedEvidence
+        - pendingEvidence
+        - totalCases
+        - totalTransactions
+        - integrityRate
+        - evidenceByType
+        - evidenceByStatus
+
+    CountByLabel:
+      type: object
+      properties:
+        label:
+          type: string
+        count:
+          type: integer
+      required:
+        - label
+        - count
+
+    VerifyHashBody:
+      type: object
+      properties:
+        hash:
+          type: string
+      required:
+        - hash

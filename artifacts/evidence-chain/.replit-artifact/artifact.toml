@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Blockchain Evidence Chain of Custody"
+version = "1.0.0"
+id = "artifacts/evidence-chain"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25560
+
+[services.development]
+run = "pnpm --filter @workspace/evidence-chain run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/evidence-chain", "run", "build" ]
+publicDir = "artifacts/evidence-chain/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25560"
+BASE_PATH = "/"
