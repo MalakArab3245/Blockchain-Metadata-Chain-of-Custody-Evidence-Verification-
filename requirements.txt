@@ -1,0 +1,11 @@
+# Core runtime requirement
+node>=18
+
+# Package manager required by project
+pnpm>=8
+
+# TypeScript compiler
+typescript~5.9.2
+
+# Code formatter
+prettier^3.8.1
